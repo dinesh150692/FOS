@@ -6,7 +6,6 @@ project.ext.envConfigFiles = [
 
 apply plugin: "com.android.application"
 apply from: project(':react-native-config').projectDir.getPath() + "/dotenv.gradle"
-    
 
 import com.android.build.OutputFile
 
@@ -120,12 +119,12 @@ android {
         release {
             storeFile file("../../../my-release-key.keystore")
             storeFile file("../../../my-release-key.keystore")
-            storePassword "phonepeacemime364u"
-            keyAlias "phonepe-ace-keystore"
-            keyPassword "phonepeacemime364u"
+            storePassword "dummy"
+            keyAlias "dummy"
+            keyPassword "dummy"
         }
     }
-    
+
     productFlavors {
         stage {
             applicationId 'com.fos.stage'
@@ -136,7 +135,7 @@ android {
             dimension "version"
         }
     }
-    
+
     buildTypes {
         release {
             minifyEnabled enableProguardInReleaseBuilds
@@ -145,13 +144,13 @@ android {
         }
 
         debug {
-                    debuggable true
-                }
+            debuggable true
+        }
 
-                dev {
-                    initWith(buildTypes.debug)
-                    matchingFallbacks = ['debug']
-                }
+        dev {
+            initWith(buildTypes.debug)
+            matchingFallbacks = ['debug']
+        }
     }
 
     // applicationVariants are e.g. debug, release
