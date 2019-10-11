@@ -1,0 +1,17 @@
+<resources>
+    <style name="SplashScreen_SplashAnimation" parent="Theme.AppCompat.NoActionBar">
+        <item name="android:windowExitAnimation">@android:anim/fade_out</item>
+        <item name="android:statusBarColor">@color/colorPrimary</item>
+         <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="android:windowBackground">@color/background</item>
+    </style>
+
+    <style name="SplashScreen_SplashTheme" parent="SplashScreen_SplashAnimation">
+        <item name="android:windowAnimationStyle">@style/SplashScreen_SplashAnimation</item>
+    </style>
+    
+    <style name="SplashScreen_Fullscreen" parent="SplashScreen_SplashTheme">
+        <item name="android:windowFullscreen">true</item>
+    </style>
+</resources>

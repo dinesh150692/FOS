@@ -1,0 +1,201 @@
+project.ext.envConfigFiles = [
+    debug: ".env.stage",
+    release: ".env.production",
+    anothercustombuild: ".env.preprod",
+]
+
+apply plugin: "com.android.application"
+apply from: project(':react-native-config').projectDir.getPath() + "/dotenv.gradle"
+    
+
+import com.android.build.OutputFile
+
+import groovy.json.JsonSlurper
+
+def getNpmVersion() {
+    def inputFile = new File("../package.json")
+    def packageJson = new JsonSlurper().parseText(inputFile.text)
+    return packageJson["version"]
+}
+
+/* calculated from git commits to give sequential integers */
+def getGitVersion() {
+    def version = getNpmVersion();
+    def (major, minor, patch) = version.toLowerCase().tokenize('.');
+    (major, minor, patch) = [major, minor, patch].collect{it.toInteger()}
+
+    return (major * 1000000) + (minor * 10000) + (patch * 100);
+    // def process = "git rev-list fosv1 --first-parent --count".execute()
+    // return process.text.toInteger()
+}
+
+project.ext.react = [
+        // the entry file for bundle generation
+        entryFile              : "index.js",
+
+        // whether to bundle JS and assets in debug mode
+        bundleInStageDebug     : true,
+        bundleInProductionDebug      : true,
+
+        devDisabledInStageDebug: false,
+        devDisabledInProductionDebug : false,
+
+        // the root of your project, i.e. where "package.json" lives
+        //    root: "../../",
+
+        // where to put the JS bundle asset in debug mode
+        jsBundleDirStageDebug  : "build/intermediates/assets/stage/debug",
+        jsBundleDirProductionDebug   : "build/intermediates/assets/production/debug",
+
+        // where to put drawable resources / React Native assets, e.g. the ones you use via
+        // require('./image.png')), in debug mode
+        resourcesDirStageDebug : "build/intermediates/res/merged/stage/debug",
+        resourcesDirProductionDebug  : "build/intermediates/res/merged/production/debug",
+
+        // by default the gradle tasks are skipped if none of the JS files or assets change; this means
+        // that we don't look at files in android/ or ios/ to determine whether the tasks are up to
+        // date; if you have any other folders that you want to ignore for performance reasons (gradle
+        // indexes the entire tree), add them here. Alternatively, if you have JS files in android/
+        // for example, you might want to remove it from here.
+        //    inputExcludes: ["android/**", "ios/*"],
+
+        // override which node gets called and with what additional arguments
+        //    nodeExecutableAndArgs: ["node"],
+
+        // supply additional arguments to the packager
+        //    extraPackagerArgs: []
+]
+
+apply from: "../../node_modules/react-native/react.gradle"
+apply from: "../../node_modules/react-native-sentry/sentry.gradle"
+
+
+/**
+ * Set this to true to create two separate APKs instead of one:
+ *   - An APK that only works on ARM devices
+ *   - An APK that only works on x86 devices
+ * The advantage is the size of the APK is reduced by about 4MB.
+ * Upload all the APKs to the Play Store and people will download
+ * the correct one based on the CPU architecture of their device.
+ */
+def enableSeparateBuildPerCPUArchitecture = false
+
+/**
+ * Run Proguard to shrink the Java bytecode in release builds.
+ */
+def enableProguardInReleaseBuilds = false
+
+/**
+ * To get the version code and version name
+ */
+def userVer = getNpmVersion()
+def googleVer = getGitVersion()
+
+android {
+    compileSdkVersion 27
+    buildToolsVersion "27.0.2"
+    flavorDimensions "version"
+    defaultConfig {
+        applicationId "com.fos"
+        minSdkVersion 16
+        targetSdkVersion 27
+        versionCode googleVer
+        versionName userVer
+        multiDexEnabled true
+        ndk {
+            abiFilters "armeabi-v7a", "x86"
+        }
+        resValue "string", "build_config_package", "com.fos"
+    }
+    splits {
+        abi {
+            reset()
+            enable enableSeparateBuildPerCPUArchitecture
+            universalApk false  // If true, also generate a universal APK
+            include "armeabi-v7a", "x86"
+        }
+    }
+
+    signingConfigs {
+        release {
+            storeFile file("../../../my-release-key.keystore")
+            storeFile file("../../../my-release-key.keystore")
+            storePassword "phonepeacemime364u"
+            keyAlias "phonepe-ace-keystore"
+            keyPassword "phonepeacemime364u"
+        }
+    }
+    
+    productFlavors {
+        stage {
+            applicationId 'com.fos.stage'
+            dimension "version"
+        }
+        production {
+            applicationId 'com.fos'
+            dimension "version"
+        }
+    }
+    
+    buildTypes {
+        release {
+            minifyEnabled enableProguardInReleaseBuilds
+            proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
+            signingConfig signingConfigs.release
+        }
+
+        debug {
+                    debuggable true
+                }
+
+                dev {
+                    initWith(buildTypes.debug)
+                    matchingFallbacks = ['debug']
+                }
+    }
+
+    // applicationVariants are e.g. debug, release
+    applicationVariants.all { variant ->
+        variant.outputs.each { output ->
+            // For each separate APK per architecture, set a unique version code as described here:
+            // http://tools.android.com/tech-docs/new-build-system/user-guide/apk-splits
+            def versionCodes = ["armeabi-v7a":1, "x86":2]
+            def abi = output.getFilter(OutputFile.ABI)
+            if (abi != null) {  // null for the universal-debug, universal-release variants
+                output.versionCodeOverride =
+                        versionCodes.get(abi) * 1048576 + defaultConfig.versionCode
+            }
+        }
+    }
+}
+
+dependencies {
+    compile project(':react-native-orientation')
+    compile project(':react-native-sentry')
+    compile project(':react-native-image-resizer')
+    compile project(':react-native-fast-image')
+    compile project(':react-native-android-sms-listener')
+    compile project(':react-native-splash-screen')
+    implementation project(':react-native-background-timer')
+    implementation project(':react-native-geolocation-service')
+    implementation project(':react-native-android-location-enabler')
+    implementation project(':react-native-device-info')
+    implementation project(':react-native-config')
+    implementation (project(':react-native-camera')) {
+        exclude group: "com.google.android.gms"
+        implementation 'com.android.support:exifinterface:27.+'
+        implementation ('com.google.android.gms:play-services-vision:12.+')
+    }
+    implementation 'com.android.support:multidex:1.0.1'
+    implementation fileTree(dir: "libs", include: ["*.jar"])
+    implementation "com.android.support:appcompat-v7:27.+"
+    implementation "com.android.support:support-v4:27.+"
+    implementation "com.facebook.react:react-native:+"  // From node_modules
+}
+
+// Run this once to be able to run the application with BUCK
+// puts all compile dependencies into folder libs for BUCK to use
+task copyDownloadableDepsToLibs(type: Copy) {
+    from configurations.compile
+    into 'libs'
+}
